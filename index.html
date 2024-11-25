@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucky Draw</title>
+  <style>
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(45deg, #ff0066, #00ccff, #ffcc00, #ff0066);
+      background-size: 400% 400%;
+      animation: gradient 10s ease infinite;
+      overflow: hidden;
+      text-align: center;
+    }
+    
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      z-index: 1;
+    }
+
+    h1 {
+      font-size: 2em;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #fff, 0 0 20px #ff0066, 0 0 30px #ffcc00;
+      color: #fff;
+    }
+
+    .result {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin-top: 20px;
+      transition: all 0.5s ease;
+      opacity: 0;
+    }
+
+    .prize {
+      font-size: 1.8em;
+      color: #FFD700;
+      animation: prizeAnimation 1s ease forwards;
+    }
+
+    .loser {
+      color: #FF6347;
+      animation: loserAnimation 1s ease forwards;
+    }
+
+    @keyframes prizeAnimation {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1.2); opacity: 1; }
+    }
+
+    @keyframes loserAnimation {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1.2); opacity: 1; }
+    }
+
+    button {
+      background-color: #ff4081;
+      border: none;
+      padding: 15px 30px;
+      color: white;
+      font-size: 1.2em;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 0 20px rgba(255, 64, 129, 0.6);
+    }
+
+    button:hover {
+      background-color: #ff80b5;
+      transform: scale(1.1);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .fireworks {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .meme {
+      display: none;
+      font-size: 2em;
+      color: red;
+      font-weight: bold;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 Welcome to the Lucky Draw! 🔥</h1>
+    <p>Try your luck and see if you're the next winner!</p>
+    <button id="drawButton" onclick="startDraw()">🎉 Try Your Luck! 🎉</button>
+    <div class="result" id="result"></div>
+    <div class="meme" id="meme">You want it that bad, don't you? 😜</div>
+    <canvas class="fireworks" id="fireworks"></canvas>
+  </div>
+
+  <script>
+    let winners = 0; // Counter for total winners
+    const prizes = [
+      { name: "Rain", rank: "1st" },
+      { name: "YYY", rank: "2nd" },
+      { name: "Rose", rank: "3rd" },
+    ];
+
+    // Check if the user has already clicked (via sessionStorage)
+    if (sessionStorage.getItem("alreadyClicked")) {
+      document.getElementById("drawButton").disabled = true;
+      document.getElementById("drawButton").style.backgroundColor = "#ccc"; // Disabled button color
+      document.getElementById("result").innerHTML = "You already participated! Refreshing won't work 😅";
+      document.getElementById("meme").style.display = "block"; // Display meme if refreshed
+    }
+
+    function startDraw() {
+      const resultElement = document.getElementById("result");
+      const button = document.getElementById("drawButton");
+
+      // Disable the button after the first click
+      button.disabled = true;
+      button.style.backgroundColor = "#ccc";  // Change button color to indicate it's disabled
+
+      // Store that the user has clicked in sessionStorage
+      sessionStorage.setItem("alreadyClicked", true);
+
+      if (winners < 3) { // Check if there are still prizes left
+        const isWinner = Math.random() < 0.33; // 33% chance of winning for each person
+
+        if (isWinner && winners < 3) {
+          const prize = prizes[winners]; // Assign prize based on the current winner count
+          resultElement.innerHTML = `🎉 Congratulations! You're the ${prize.rank} winner and won a perfume called "${prize.name}"! 🎉`;
+          resultElement.classList.add("prize");
+          winners++; // Increment the winners count
+          launchFireworks();
+        } else {
+          resultElement.textContent = "😢 Sorry, better luck next time!";
+          resultElement.classList.add("loser");
+        }
+      } else {
+        resultElement.innerHTML = "🎉 All 3 prizes have been claimed! 🎊";
+        resultElement.classList.remove("loser");
+        resultElement.classList.add("prize");
+      }
+
+      // Fade the result in
+      resultElement.style.opacity = 1;
+    }
+
+    function launchFireworks() {
+      const canvas = document.getElementById("fireworks");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const fireworks = [];
+
+      function Firework(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.radius = Math.random() * 3 + 1;
+        this.alpha = 1;
+        this.fade = Math.random() * 0.03 + 0.02;
+      }
+
+      Firework.prototype.update = function () {
+        this.alpha -= this.fade;
+      };
+
+      Firework.prototype.draw = function () {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        ctx.fillStyle = `rgba(${this.color},${this.alpha})`;
+        ctx.fill();
+      };
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        fireworks.forEach((firework, index) => {
+          firework.update();
+          firework.draw();
+          if (firework.alpha <= 0) fireworks.splice(index, 1);
+        });
+        if (fireworks.length > 0) requestAnimationFrame(animate);
+      }
+
+      function createFireworks() {
+        for (let i = 0; i < 30; i++) {
+          const x = Math.random() * canvas.width;
+          const y = Math.random() * canvas.height / 2;
+          const color = `${Math.floor(Math.random() * 255)},${Math.floor(
+            Math.random() * 255
+          )},${Math.floor(Math.random() * 255)}`;
+          fireworks.push(new Firework(x, y, color));
+        }
+        animate();
+      }
+
+      createFireworks();
+    }
+  </script>
+</body>
+</html>
